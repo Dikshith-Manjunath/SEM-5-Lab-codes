@@ -4,9 +4,9 @@ BEGIN{
 }
 {
     if($1=="r"&&$3=="2"&&$4=="3"&& $5=="tcp")
-    tcp++;
+        tcp++;
     if($1=="r"&&$3=="2"&&$4=="3"&&$5=="cbr")
-    udp++;
+        udp++;
 }
 END{
     printf("\n Total number of packets sent by TCP : %d\n",tcp);
