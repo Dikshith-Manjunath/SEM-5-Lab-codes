@@ -18,7 +18,7 @@ print("\nTarget:\n", target)
 def learn(concepts, target):
     # Step 1: Initialize S and G
     specific_h = concepts[0].copy()
-    general_h = [["?" for _ in range(len(specific_h))] for _ in range(len(specific_h))]
+    general_h = [["?" for i in range(len(specific_h))] for i in range(len(specific_h))]
 
     print("\nInitial Specific Hypothesis:", specific_h)
     print("Initial General Hypothesis:", general_h)
