@@ -8,6 +8,3 @@
 8.  EM algorithm 🖕
 9.  Hierarchical Clustering 🖕
 10. Back propagation algorithm 🖕
-
-
-7,8,9 at 4:30 pls
