@@ -4,7 +4,7 @@ import numpy as np
 # -------------------------------------
 # Load dataset
 # -------------------------------------
-data = pd.read_csv("C:/Users/ISE14/Documents/CSV_AIML/P2Data.csv")
+data = pd.read_csv("AIML/datasets/p2.csv")
 print("Dataset:\n", data)
 
 # Convert dataset into numpy arrays
@@ -39,5 +39,5 @@ def train_find_s(attributes, targets):
 # -------------------------------------
 # Output final hypothesis
 # -------------------------------------
-final_hypothesis = train_find_s(attributes, targets)
-print("\nFinal Hypothesis:", final_hypothesis)
+
+print("\nFinal Hypothesis:", train_find_s(attributes, targets))
