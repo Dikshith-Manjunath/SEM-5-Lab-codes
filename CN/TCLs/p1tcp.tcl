@@ -29,12 +29,10 @@ set n3 [$ns node]
 # Link n1 <-> n2: 1000Kbps, 60ms delay, DropTail, Q-limit 14
 $ns duplex-link $n1 $n2 1000Kb 60ms DropTail
 $ns queue-limit $n1 $n2 14
-$ns duplex-link-op $n1 $n2 queuePos 0.5
 
 # Link n2 <-> n3: 500Kbps, 60ms delay, DropTail, Q-limit 4
 $ns duplex-link $n2 $n3 500Kb 60ms DropTail
 $ns queue-limit $n2 $n3 4
-$ns duplex-link-op $n2 $n3 queuePos 0.2
 
 # --- Agents and Applications ---
 
