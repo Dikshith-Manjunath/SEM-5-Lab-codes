@@ -1,7 +1,6 @@
 #include <stdio.h>
-#include <stdlib.h> // For EXIT_SUCCESS
+#include <stdlib.h>
 
-// Function is small and simple, but kept for readability over a ternary operator.
 int min(int x, int y) {
     if (x < y) {
         return x;
@@ -11,87 +10,64 @@ int min(int x, int y) {
 }
 
 int main() {
-    // --- Input Variables ---
-    int bucket_capacity;    // cap: Maximum size of the bucket (B)
-    int output_rate;        // process: Constant output rate (R)
-    int simulation_time_sec; // nsec: Number of seconds to simulate packet arrival
+    // --- Input Variables (Read from User) ---
+    int bucket_capacity;    // Max size of the bucket (B)
+    int output_rate;        // Constant output rate (R)
+    int simulation_time_sec; // Number of seconds packets arrive
 
     // --- State Variables ---
-    int current_bucket_size = 0; // count: Current number of bytes/packets in the bucket
-    int packets_dropped = 0;     // drop: Packets dropped in the current second
-    int packets_sent = 0;        // mini: Packets sent in the current second (min(current_bucket_size, output_rate))
-    
+    int current_bucket_size = 0; // Packets currently in the bucket
+    int packets_dropped = 0;     // Packets dropped in a second
+    int packets_sent = 0;        // Packets sent in a second
+
     // --- Simulation Input ---
-    int arrival_packets[25]; // inp: Array to store packet sizes entering per second
+    // Assuming inputs are read into these variables/array
+    // For pure logic, we'll assume these are set by the user:
+    
+    // Example values (replace with actual user input via scanf)
+    bucket_capacity = 10;
+    output_rate = 3;
+    simulation_time_sec = 5;
+    int arrival_packets[] = {4, 6, 2, 5, 1}; // Packets arriving per second
 
-    printf("--- Leaky Bucket Traffic Shaping Simulation ---\n");
-
-    printf("Enter the Bucket Capacity (Max Size): ");
-    scanf("%d", &bucket_capacity);
-
-    printf("Enter the Constant Output Rate (Packets/sec): ");
-    scanf("%d", &output_rate);
-
-    printf("Enter the No. of Seconds for Packet Arrival: ");
-    scanf("%d", &simulation_time_sec);
-
-    // Read arrival packet sizes for the simulation duration
-    for (int i = 0; i < simulation_time_sec; i++) {
-        printf("Enter the size of the packet entering at second %d: ", i + 1);
-        scanf("%d", &arrival_packets[i]);
-    }
-
-    // --- Simulation Output Header ---
-    printf("\n\n");
-    printf("Second | Rec'd | Sent | Left in Bucket | Dropped\n");
-    printf("-------|-------|------|----------------|--------\n");
-
-    // --- Main Simulation Loop (While packets are arriving) ---
+    // --- Core Simulation Logic ---
     int current_sec;
+
+    // 1. Simulation Loop (While packets are arriving)
     for (current_sec = 0; current_sec < simulation_time_sec; current_sec++) {
         int incoming_packets = arrival_packets[current_sec];
         packets_dropped = 0;
 
-        // 1. Packet Arrival and Dropping
+        // a. Packet Arrival and Dropping (Bucket Overflow Check)
         current_bucket_size += incoming_packets;
         
         if (current_bucket_size > bucket_capacity) {
             packets_dropped = current_bucket_size - bucket_capacity;
-            current_bucket_size = bucket_capacity; // Bucket overflow; set to capacity
+            current_bucket_size = bucket_capacity; // Cap at capacity
         }
 
-        // 2. Packet Processing (Leaky Bucket Output)
+        // b. Packet Processing (Constant Output)
         packets_sent = min(current_bucket_size, output_rate);
         current_bucket_size -= packets_sent;
-
-        // 3. Print Results for the current second
-        printf("%6d | %5d | %4d | %14d | %7d\n",
-               current_sec + 1,
-               incoming_packets,
-               packets_sent,
-               current_bucket_size,
-               packets_dropped);
+        
+        // --- Logic Checkpoints (For debugging/verification) ---
+        // printf("Sec %d | In: %d | Sent: %d | Left: %d | Dropped: %d\n", 
+        //         current_sec + 1, incoming_packets, packets_sent, 
+        //         current_bucket_size, packets_dropped);
     }
 
-    // --- Drain Loop (After all input packets have arrived) ---
-    // Continue until the bucket is empty
+    // 2. Drain Loop (After all input packets have arrived)
     while (current_bucket_size > 0) {
         current_sec++;
         
-        // 1. No new packets arrive (incoming_packets = 0)
-        
-        // 2. Packet Processing (Leaky Bucket Output)
+        // a. Packet Processing (Constant Output)
         packets_sent = min(current_bucket_size, output_rate);
         current_bucket_size -= packets_sent;
         
-        // 3. Print Results for the draining second
-        printf("%6d | %5d | %4d | %14d | %7d\n",
-               current_sec + 1,
-               0, // No incoming packets
-               packets_sent,
-               current_bucket_size,
-               0); // No drops in this phase since input is 0
+        // --- Logic Checkpoints (For debugging/verification) ---
+        // printf("Sec %d | In: 0 | Sent: %d | Left: %d | Dropped: 0\n", 
+        //         current_sec + 1, packets_sent, current_bucket_size);
     }
 
-    return EXIT_SUCCESS;
+    return 0;
 }

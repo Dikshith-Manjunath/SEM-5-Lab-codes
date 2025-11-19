@@ -1,99 +1,69 @@
 #include <stdio.h>
-#include <stdlib.h> // For EXIT_SUCCESS
+#include <stdlib.h>
 
-#define MAX_NODES 10
 #define INF 999 // Represents infinity (no direct link)
 
-// Global arrays for simplicity in demonstration (used across main and functions)
-int cost_matrix[MAX_NODES][MAX_NODES]; // g: Current cost matrix (distance vector)
-int via_node[MAX_NODES][MAX_NODES];    // via: Stores the next hop node index (0 to n-1)
-int num_nodes;                         // n: Number of nodes
+// Global arrays for costs and next-hop information
+int cost[10][10]; // g: Current best cost
+int via_node[10][10];    // via: Stores the next hop node index (0 to n-1)
+int n;                         // n: Number of nodes
 
-/**
- * @brief Reads the initial direct costs (routing table) from the user.
- */
+// --- Function to get initial link costs ---
 void get_initial_costs() {
     printf("\nEnter the initial direct costs (use %d for no direct link):\n", INF);
     
-    // Print column headers
+    // Print column headers (A, B, C...)
     printf("\t");
-    for (int j = 0; j < num_nodes; j++) {
+    for (int j = 0; j < n; j++) {
         printf("%c\t", 'A' + j);
     }
     printf("\n");
 
-    // Read the matrix
-    for (int i = 0; i < num_nodes; i++) {
+    // Read the cost matrix
+    for (int i = 0; i < n; i++) {
         printf("%c ", 'A' + i);
-        for (int j = 0; j < num_nodes; j++) {
-            scanf("%d", &cost_matrix[i][j]);
-            
-            // Initialization: Every node's best path to itself is 0, via itself.
+        for (int j = 0; j < n; j++) {
+            scanf("%d", &cost[i][j]);
             if (i == j) {
-                cost_matrix[i][j] = 0;
+                cost[i][j] = 0;
             }
         }
     }
 }
 
-/**
- * @brief Prints the final routing table for all nodes.
- */
-void print_routing_tables() {
-    printf("\n--- Final Converged Routing Tables ---\n");
-    for (int i = 0; i < num_nodes; i++) {
-        printf("Table for Router %c (from Source %c):\n", 'A' + i, 'A' + i);
-        printf("Destination\tCost\tNext Hop\n");
-        printf("--------------------------------\n");
-        
-        for (int j = 0; j < num_nodes; j++) {
-            printf("%c\t\t%d\t%c\n", 
-                   'A' + j, 
-                   cost_matrix[i][j], 
-                   'A' + via_node[i][j]);
-        }
-        printf("\n");
-    }
-}
 
-/**
- * @brief Executes the Distance Vector Routing (Bellman-Ford) logic.
- * The core relaxation loop is run once, which is sufficient for a converged table
- * if the number of nodes (n) is the maximum diameter.
- */
+// --- Core Distance Vector Logic (Bellman-Ford) ---
 void run_distance_vector() {
-    int changed = 0;
+    int i, j, k;
     
-    // Initialize via_node: Path from i to j is initially directly through i.
-    for (int i = 0; i < num_nodes; i++) {
-        for (int j = 0; j < num_nodes; j++) {
-            via_node[i][j] = i;
+    // 1. Initialization of Next Hop (via_node)
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            via_node[i][j] = i; 
         }
     }
     
-    // Distance Vector Update Loop: The algorithm guarantees convergence in at most N-1 iterations.
-    // We run it N-1 times to ensure convergence, though the original code only ran it once inside a while(1) break.
-    // Running it N times is safe and simple.
-    for (int iteration = 0; iteration < num_nodes; iteration++) {
-        changed = 0;
+    // 2. Main Relaxation Loop (runs N times to guarantee convergence)
+    for (int iteration = 0; iteration < n; iteration++) {
+        int changed = 0;
         
-        // Loop through all possible source nodes (i)
-        for (int i = 0; i < num_nodes; i++) {
-            // Loop through all neighbors (j) whose table we are receiving/using
-            for (int j = 0; j < num_nodes; j++) {
-                // Only consider nodes j that are directly reachable from i (cost < INF)
-                if (cost_matrix[i][j] < INF) {
-                    // Loop through all possible destinations (k) in neighbor j's table
-                    for (int k = 0; k < num_nodes; k++) {
-                        
-                        // Distance Vector Equation (Bellman-Ford Relaxation)
-                        // New path cost from i to k via j = cost(i -> j) + cost(j -> k)
-                        int new_cost = cost_matrix[i][j] + cost_matrix[j][k];
+        // Loop through all possible Source Routers (i)
+        for (i = 0; i < n; i++) {
+            // Loop through all Intermediate Routers/Neighbors (j)
+            for (j = 0; j < n; j++) {
+                
+                // Loop through all possible Destination Routers (k)
+                for (k = 0; k < n; k++) {
+                    
+                    // Calculate new path cost: Cost(i -> j) + Cost(j -> k)
+                    // Note: Check for INF to prevent overflow if costs are large, but usually not needed with 999
+                    if (cost[i][j] != INF && cost[j][k] != INF) {
+                        int new_cost = cost[i][j] + cost[j][k];
 
-                        // If the new path is shorter than the currently known path
-                        if (new_cost < cost_matrix[i][k]) {
-                            cost_matrix[i][k] = new_cost; // Update cost
-                            via_node[i][k] = j;           // Update next hop
+                        // Bellman-Ford Relaxation: Check if the new path is shorter
+                        if (new_cost < cost[i][k]) {
+                            cost[i][k] = new_cost;
+                            via_node[i][k] = j;
                             changed = 1;
                         }
                     }
@@ -101,27 +71,43 @@ void run_distance_vector() {
             }
         }
         
-        // Optimization: If no distances changed in an iteration, the algorithm has converged.
+        // Stop if no distance was updated
         if (changed == 0) {
             break; 
         }
     }
 }
 
+// --- Function to print the final routing tables ---
+void print_routing_tables() {
+    printf("\n--- Final Converged Routing Tables ---\n");
+    for (int i = 0; i < n; i++) {
+        printf("Table for Router %c:\n", 'A' + i);
+        printf("Destination\tCost\tNext Hop\n");
+        printf("--------------------------------\n");
+        
+        for (int j = 0; j < n; j++) {
+            printf("%c\t\t%d\t%c\n", 
+                   'A' + j, 
+                   cost[i][j], 
+                   'A' + via_node[i][j]);
+        }
+        printf("\n");
+    }
+}
+
 int main() {
     printf("--- Distance Vector Routing (Bellman-Ford) ---\n");
-    printf("Enter the number of nodes (max %d): ", MAX_NODES);
-    scanf("%d", &num_nodes);
+    printf("Enter the number of nodes (max %d): ", 10);
+    scanf("%d", &n);
 
-    if (num_nodes <= 0 || num_nodes > MAX_NODES) {
+    if (n <= 0 || n > 10) {
         printf("Invalid number of nodes.\n");
         return EXIT_FAILURE;
     }
 
     get_initial_costs();
     
-    // Note: The original code's single-iteration update followed by a break is simplified
-    // into a standard, guaranteed-to-converge loop inside run_distance_vector().
     run_distance_vector();
 
     print_routing_tables();

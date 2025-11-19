@@ -1,66 +1,61 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define MAX_NODES 10
 #define INF 999 // Represents infinity (no direct link)
 
-// Global variables are minimized. All large arrays are passed via arguments.
+// Arrays used by the algorithm
+int cost[10][10];
+int dis[10];   // Shortest distance from source to node i
+int pre[10]; // predecessor of node i on the shortest path
+int n;
 
 /**
- * @brief Finds the shortest path from a single source to all other nodes using Dijkstra's algorithm.
- * * @param num_nodes The total number of nodes in the graph.
- * @param cost_matrix The adjacency matrix containing edge weights (costs).
- * @param source The starting node index.
- * @param distance The output array storing the shortest distance from the source to each node.
- * @param predecessor The output array storing the predecessor node for reconstructing the path.
+ * @brief Finds the shortest path from a single source to all other nodes.
  */
-void dijkstra(int num_nodes, int cost_matrix[MAX_NODES][MAX_NODES], int source, int distance[], int predecessor[]) {
-    int visited[MAX_NODES]; // Tracks whether a node has been included in the shortest path tree (s[])
-    int current_node;       // The node selected in the current iteration (u)
-    int neighbor_node;      // A neighbor node being checked (v)
-    int min_dist;           // The minimum distance found in the current iteration
+void dijkstra(int s) {
+    int visited[10] = {0}; // Tracks nodes included in the Shortest Path Tree
+    int current_node;
+    int min_dist;
 
-    // --- Initialization ---
-    for (int i = 0; i < num_nodes; i++) {
-        distance[i] = cost_matrix[source][i]; // Initial distance is the direct cost
-        visited[i] = 0;                       // No node is visited initially
-        predecessor[i] = source;              // Initial predecessor for all reachable nodes is the source
+    // --- 1. Initialization ---
+    for (int i = 0; i < n; i++) {
+        dis[i] = cost[s][i];
+        pre[i] = s;
     }
-    
-    // The distance to the source node itself is 0, and it is marked as visited.
-    visited[source] = 1;
-    distance[source] = 0;
 
-    // The main loop runs (num_nodes - 1) times to include all other nodes.
-    for (int count = 1; count < num_nodes; count++) {
+    visited[s] = 1;
+    dis[s] = 0;
+
+    // --- 2. Main Loop (N-1 iterations) ---
+    for (int count = 1; count < n; count++) {
         min_dist = INF;
         current_node = -1;
 
-        // 1. Find the unvisited node with the minimum distance (u)
-        for (int i = 0; i < num_nodes; i++) {
-            if (visited[i] == 0 && distance[i] < min_dist) {
-                min_dist = distance[i];
+        // Find the unvisited node with the minimum dis (current_node)
+        for (int i = 0; i < n; i++) {
+            if (visited[i] == 0 && dis[i] < min_dist) {
+                min_dist = dis[i];
                 current_node = i;
             }
         }
 
-        // If no reachable unvisited node is found (current_node == -1), we stop.
+        // If no reachable unvisited node exists, exit
         if (current_node == -1) {
-            return; 
+            break;
         }
 
-        // Mark the selected node as visited and include it in the Shortest Path Tree
+        // Mark the selected node as visited
         visited[current_node] = 1;
 
-        // 2. Update the distances of its neighbors (Relaxation step)
-        for (neighbor_node = 0; neighbor_node < num_nodes; neighbor_node++) {
-            // Check only unvisited neighbors and ensure a valid edge exists
-            if (visited[neighbor_node] == 0 && cost_matrix[current_node][neighbor_node] != INF) {
+        // --- 3. Relaxation Step ---
+        for (int neighbor = 0; neighbor < n; neighbor++) {
+            // Check unvisited neighbors with a valid edge from current_node
+            if (visited[neighbor] == 0 && cost[current_node][neighbor] != INF) {
                 
-                // Relaxation Formula: distance[v] = min(distance[v], distance[u] + cost(u, v))
-                if (distance[current_node] + cost_matrix[current_node][neighbor_node] < distance[neighbor_node]) {
-                    distance[neighbor_node] = distance[current_node] + cost_matrix[current_node][neighbor_node];
-                    predecessor[neighbor_node] = current_node; // Update the path
+                // Relaxation: Update dis if a shorter path is found
+                if (dis[current_node] + cost[current_node][neighbor] < dis[neighbor]) {
+                    dis[neighbor] = dis[current_node] + cost[current_node][neighbor];
+                    pre[neighbor] = current_node; // Update the path
                 }
             }
         }
@@ -68,27 +63,27 @@ void dijkstra(int num_nodes, int cost_matrix[MAX_NODES][MAX_NODES], int source, 
 }
 
 /**
- * @brief Prints the shortest path from the source to a specific destination node.
+ * @brief Prints the shortest path from source to destination.
  */
-void print_path(int source, int destination, const int distance[], const int predecessor[]) {
-    if (distance[destination] == INF) {
-        printf("Node %d is not reachable from source %d.\n", destination, source);
+void print_path(int source, int destination) {
+    if (dis[destination] == INF) {
+        printf("Node %d is unreachable.\n", destination);
         return;
     }
 
-    printf("Shortest Path to Node %d: ", destination);
-    
-    // Reconstruct path by tracing predecessors backward
-    int path[MAX_NODES];
+    // Reconstruct path by tracing pres backward
+    int path[10];
     int path_index = 0;
     int current = destination;
     
     while (current != source) {
         path[path_index++] = current;
-        current = predecessor[current];
+        current = pre[current];
     }
-    path[path_index++] = source; // Add the source node
+    path[path_index++] = source;
 
+    printf("Path to %d (Cost: %d): ", destination, dis[destination]);
+    
     // Print the path in the correct order (Source -> Destination)
     for (int i = path_index - 1; i >= 0; i--) {
         printf("%d", path[i]);
@@ -96,55 +91,38 @@ void print_path(int source, int destination, const int distance[], const int pre
             printf(" -> ");
         }
     }
-    
-    printf(" (Total Cost: %d)\n", distance[destination]);
+    printf("\n");
 }
 
 int main() {
-    int cost_matrix[MAX_NODES][MAX_NODES];
-    int num_nodes, source_node;
-    int distance[MAX_NODES];   // Shortest distance from source to node i
-    int predecessor[MAX_NODES]; // Predecessor of node i on the shortest path
+    int source_node;
 
-    printf("--- Dijkstra's Algorithm: Shortest Path ---\n");
-    printf("Enter the number of nodes (max %d): ", MAX_NODES);
-    scanf("%d", &num_nodes);
+    printf("Enter number of nodes: ");
+    scanf("%d", &n);
 
-    if (num_nodes <= 0 || num_nodes > MAX_NODES) {
-        printf("Invalid number of nodes.\n");
-        return EXIT_FAILURE;
-    }
-
-    printf("Enter the cost matrix (use %d for no direct link):\n", INF);
-    for (int i = 0; i < num_nodes; i++) {
-        for (int j = 0; j < num_nodes; j++) {
-            scanf("%d", &cost_matrix[i][j]);
-            // Ensure cost to self is 0
+    printf("Enter cost matrix (use %d for INF):\n", INF);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            scanf("%d", &cost[i][j]);
             if (i == j) {
-                cost_matrix[i][j] = 0;
+                cost[i][j] = 0;
             }
         }
     }
 
-    printf("Enter the source node index (0 to %d): ", num_nodes - 1);
+    printf("Enter source node (0 to %d): ", n - 1);
     scanf("%d", &source_node);
-    
-    if (source_node < 0 || source_node >= num_nodes) {
-        printf("Invalid source node.\n");
-        return EXIT_FAILURE;
-    }
 
-    // Run Dijkstra's Algorithm
-    dijkstra(num_nodes, cost_matrix, source_node, distance, predecessor);
+    // Run Algorithm
+    dijkstra(source_node);
 
-    printf("\n--- Results from Source Node %d ---\n", source_node);
-    
-    // Print results for all nodes
-    for (int dest_node = 0; dest_node < num_nodes; dest_node++) {
+    // Output Results
+    printf("\n--- Shortest Paths from Node %d ---\n", source_node);
+    for (int dest_node = 0; dest_node < n; dest_node++) {
         if (source_node != dest_node) {
-            print_path(source_node, dest_node, distance, predecessor);
+            print_path(source_node, dest_node);
         }
     }
 
-    return EXIT_SUCCESS;
+    return 0;
 }
