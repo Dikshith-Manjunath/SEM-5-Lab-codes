@@ -14,7 +14,7 @@ int n;
  */
 void dijkstra(int s) {
     int visited[10] = {0}; // Tracks nodes included in the Shortest Path Tree
-    int current_node;
+    int cur;
     int min_dist;
 
     // --- 1. Initialization ---
@@ -29,33 +29,33 @@ void dijkstra(int s) {
     // --- 2. Main Loop (N-1 iterations) ---
     for (int count = 1; count < n; count++) {
         min_dist = INF;
-        current_node = -1;
+        cur = -1;
 
-        // Find the unvisited node with the minimum dis (current_node)
+        // Find the unvisited node with the minimum dis (cur)
         for (int i = 0; i < n; i++) {
             if (visited[i] == 0 && dis[i] < min_dist) {
                 min_dist = dis[i];
-                current_node = i;
+                cur = i;
             }
         }
 
         // If no reachable unvisited node exists, exit
-        if (current_node == -1) {
+        if (cur == -1) {
             break;
         }
 
         // Mark the selected node as visited
-        visited[current_node] = 1;
+        visited[cur] = 1;
 
         // --- 3. Relaxation Step ---
-        for (int neighbor = 0; neighbor < n; neighbor++) {
-            // Check unvisited neighbors with a valid edge from current_node
-            if (visited[neighbor] == 0 && cost[current_node][neighbor] != INF) {
+        for (int ne = 0; ne < n; ne++) {
+            // Check unvisited nes with a valid edge from cur
+            if (visited[ne] == 0 && cost[cur][ne] != INF) {
                 
                 // Relaxation: Update dis if a shorter path is found
-                if (dis[current_node] + cost[current_node][neighbor] < dis[neighbor]) {
-                    dis[neighbor] = dis[current_node] + cost[current_node][neighbor];
-                    pre[neighbor] = current_node; // Update the path
+                if (dis[cur] + cost[cur][ne] < dis[ne]) {
+                    dis[ne] = dis[cur] + cost[cur][ne];
+                    pre[ne] = cur; // Update the path
                 }
             }
         }
@@ -72,7 +72,7 @@ void print_path(int source, int destination) {
     }
 
     // Reconstruct path by tracing pres backward
-    int path[10];
+    int path[10];ne
     int path_index = 0;
     int current = destination;
     

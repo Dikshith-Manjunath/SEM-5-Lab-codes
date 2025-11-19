@@ -10,27 +10,16 @@ int min(int x, int y) {
 }
 
 int main() {
-    // --- Input Variables (Read from User) ---
-    int bucket_capacity;    // Max size of the bucket (B)
-    int output_rate;        // Constant output rate (R)
-    int simulation_time_sec; // Number of seconds packets arrive
+    // --- Configuration (Assumed Input Values) ---
+    const int bucket_capacity = 10;
+    const int output_rate = 3;
+    const int simulation_time_sec = 5;
+    const int arrival_packets[] = {4, 6, 2, 5, 1}; // Packets arriving per second
 
     // --- State Variables ---
-    int current_bucket_size = 0; // Packets currently in the bucket
-    int packets_dropped = 0;     // Packets dropped in a second
-    int packets_sent = 0;        // Packets sent in a second
-
-    // --- Simulation Input ---
-    // Assuming inputs are read into these variables/array
-    // For pure logic, we'll assume these are set by the user:
-    
-    // Example values (replace with actual user input via scanf)
-    bucket_capacity = 10;
-    output_rate = 3;
-    simulation_time_sec = 5;
-    int arrival_packets[] = {4, 6, 2, 5, 1}; // Packets arriving per second
-
-    // --- Core Simulation Logic ---
+    int current_bucket_size = 0;
+    int packets_dropped = 0;
+    int packets_sent = 0;
     int current_sec;
 
     // 1. Simulation Loop (While packets are arriving)
@@ -50,23 +39,23 @@ int main() {
         packets_sent = min(current_bucket_size, output_rate);
         current_bucket_size -= packets_sent;
         
-        // --- Logic Checkpoints (For debugging/verification) ---
-        // printf("Sec %d | In: %d | Sent: %d | Left: %d | Dropped: %d\n", 
-        //         current_sec + 1, incoming_packets, packets_sent, 
-        //         current_bucket_size, packets_dropped);
+        // **********************************************
+        // * PLACE LOGIC CHECKPOINTS HERE IF NEEDED *
+        // **********************************************
     }
 
     // 2. Drain Loop (After all input packets have arrived)
     while (current_bucket_size > 0) {
-        current_sec++;
+        current_sec++; // Advance time
         
         // a. Packet Processing (Constant Output)
+        // Note: No incoming packets or drops in this phase (incoming=0, dropped=0)
         packets_sent = min(current_bucket_size, output_rate);
         current_bucket_size -= packets_sent;
         
-        // --- Logic Checkpoints (For debugging/verification) ---
-        // printf("Sec %d | In: 0 | Sent: %d | Left: %d | Dropped: 0\n", 
-        //         current_sec + 1, packets_sent, current_bucket_size);
+        // **********************************************
+        // * PLACE LOGIC CHECKPOINTS HERE IF NEEDED *
+        // **********************************************
     }
 
     return 0;
