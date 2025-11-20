@@ -74,3 +74,5 @@ b0, b1 = coefficients(dataset)
 
 print("RMSE =", rmse)
 print("b0 =", b0, "\nb1 =", b1)
+
+#   winget install --id Git.Git -e --source winget
