@@ -1,0 +1,534 @@
+program 1:
+
+from math import sqrt
+
+# ------------------------------
+# Basic statistics
+# ------------------------------
+
+def mean(values):
+    return sum(values) / len(values)
+
+def variance(values, mean_value):
+    return sum((v - mean_value)**2 for v in values) / len(values)
+
+def covariance(xs, mean_x, ys, mean_y):
+    return sum((xs[i] - mean_x) * (ys[i] - mean_y) for i in range(len(xs))) / len(xs)
+
+# ------------------------------
+# Linear Regression (b0 + b1*x)
+# ------------------------------
+
+def coefficients(dataset):
+    # Split into X and Y
+    X = [row[0] for row in dataset]
+    Y = [row[1] for row in dataset]
+
+    mean_x = mean(X)
+    mean_y = mean(Y)
+
+    b1 = covariance(X, mean_x, Y, mean_y) / variance(X, mean_x)
+    b0 = mean_y - b1 * mean_x
+
+    return b0, b1
+
+def predict_row(x_value, b0, b1):
+    return b0 + b1 * x_value
+
+def simple_linear_regression(train_data, test_data):
+    b0, b1 = coefficients(train_data)
+    predictions = [predict_row(row[0], b0, b1) for row in test_data]
+    return predictions
+
+# ------------------------------
+# Model Evaluation
+# ------------------------------
+
+def rmse_metric(actual, predicted):
+    errors = [(predicted[i] - actual[i])**2 for i in range(len(actual))]
+    return sqrt(sum(errors) / len(actual))
+
+def evaluate_algorithm(dataset):
+    # Copy dataset and blank out Y values in the test set
+    test_set = [ [row[0]] for row in dataset ]
+
+    predictions = simple_linear_regression(dataset, test_set)
+
+    # Actual Y values
+    actual_values = [row[1] for row in dataset]
+
+    return rmse_metric(actual_values, predictions)
+
+# ------------------------------
+# Run sample
+# ------------------------------
+
+dataset = [
+    [1, 1],
+    [2, 3],
+    [4, 3],
+    [3, 2],
+    [5, 5]
+]
+
+rmse = evaluate_algorithm(dataset)
+b0, b1 = coefficients(dataset)
+
+print("RMSE =", rmse)
+print("b0 =", b0, "\nb1 =", b1)
+
+#   winget install --id Git.Git -e --source winget
+
+
+
+Program 2:
+
+import pandas as pd
+import numpy as np
+
+# -------------------------------------
+# Load dataset
+# -------------------------------------
+data = pd.read_csv("AIML/datasets/p2.csv")
+print("Dataset:\n", data)
+
+# Convert dataset into numpy arrays
+attributes = np.array(data)[:, :-1]   # all columns except last
+targets = np.array(data)[:, -1]       # last column (Yes/No)
+
+print("\nAttributes:\n", attributes)
+print("\nTargets: ", targets)
+
+# -------------------------------------
+# Find-S Algorithm
+# -------------------------------------
+def train_find_s(attributes, targets):
+    # Step 1: Find the first positive example to initialize the specific hypothesis
+    specific_h = None
+
+    for i, value in enumerate(targets):
+        if value == "Yes":
+            specific_h = attributes[i].copy()
+            break
+
+    # Step 2: Generalize hypothesis for every other positive example
+    for i, value in enumerate(targets):
+        if value == "Yes":
+            for j in range(len(specific_h)):
+                if attributes[i][j] != specific_h[j]:
+                    specific_h[j] = "?"
+
+    return specific_h
+
+
+# -------------------------------------
+# Output final hypothesis
+# -------------------------------------
+
+print("\nFinal Hypothesis:", train_find_s(attributes, targets))
+
+
+Program 3:
+
+
+import numpy as np
+import pandas as pd
+
+# Load dataset
+data = pd.read_csv('AIML/datasets/p3.csv')
+print("Dataset:\n", data)
+
+# attributes = all attributes except last column
+attributes = np.array(data)[:, :-1]
+target = np.array(data)[:, -1]
+
+print("\nattributes:\n", attributes)
+print("\nTarget:\n", target)
+
+# --------------------------------------------------
+# Candidate Elimination Algorithm
+# --------------------------------------------------
+def learn(attributes, target):
+    # Step 1: Initialize S and G
+    specific_h = attributes[0].copy()
+    general_h = [["?" for i in range(len(specific_h))] for i in range(len(specific_h))]
+
+    print("\nInitial Specific Hypothesis:", specific_h)
+    print("Initial General Hypothesis:", general_h)
+
+    # Step 2: Process training examples
+    for i, value in enumerate(attributes):
+        print(f"\nvalue {i+1}: {value}, Target: {target[i]}")
+
+        if target[i] == "Yes":   # Positive example
+            print(" → Positive example")
+            # Generalize S where necessary
+            for x in range(len(specific_h)):
+                if value[x] != specific_h[x]:
+                    specific_h[x] = "?"
+                    general_h[x][x] = "?"
+        else:                   # Negative example
+            print(" → Negative example")
+            # Specialize G to exclude this value
+            for x in range(len(specific_h)):
+                if value[x] != specific_h[x]:
+                    general_h[x][x] = specific_h[x]
+                else:
+                    general_h[x][x] = "?"
+
+        print("Updated Specific Hypothesis:", specific_h)
+        print("Updated General Hypothesis:", general_h)
+
+    # Remove fully '?' rows from G
+    general_h = [g for g in general_h if g != ["?"] * len(specific_h)]
+
+    return specific_h, general_h
+
+
+# Run CE Algorithm
+S_final, G_final = learn(attributes, target)
+
+print("\nFinal Specific Hypothesis:\n", S_final)
+print("\nFinal General Hypothesis:\n", G_final)
+
+
+
+Program 5:
+
+import pandas as pd
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from sklearn import metrics
+
+# 1. Load Data (Assuming Iris Dataset structure)
+names = ['sepal-length', 'sepal-width', 'petal-length', 'petal-width', 'Class']
+dataset = pd.read_csv("AIML/datasets/p5.csv", names=names) # Added names argument for safety
+
+X = dataset.iloc[:, :-1]
+y = dataset.iloc[:, -1]
+
+# 2. Split with Seed (random_state ensures the split is the same every time)
+Xtrain, Xtest, ytrain, ytest = train_test_split(X, y, test_size=0.10, random_state=42)
+
+# 3. Train Model
+classifier = KNeighborsClassifier(n_neighbors=5).fit(Xtrain, ytrain)
+ypred = classifier.predict(Xtest)
+
+# 4. Simplified Loop using zip() and f-strings
+print(f"{'Original Label':<25} {'Predicted Label':<25} {'Correct/Wrong'}")
+print("-" * 65)
+
+for actual, predicted in zip(ytest, ypred):
+    status = "Correct" if actual == predicted else "Wrong"
+    print(f"{actual:<25} {predicted:<25} {status}")
+
+# 5. Metrics
+print("\nConfusion Matrix:\n", metrics.confusion_matrix(ytest, ypred))
+print("\nClassification Report:\n", metrics.classification_report(ytest, ypred))
+print(f"Accuracy: {metrics.accuracy_score(ytest, ypred):.2f}")
+
+
+
+Program 6:
+
+
+import numpy as np
+import pandas as pd
+from pgmpy.models import DiscreteBayesianNetwork
+from pgmpy.estimators import MaximumLikelihoodEstimator
+from pgmpy.inference import VariableElimination
+
+# 1. Load Data
+heartDisease = pd.read_csv("AIML/datasets/p6.csv")
+
+# 2. Data Cleaning
+# Replace '?' with NaN and drop rows with missing values
+heartDisease = heartDisease.replace('?', np.nan).dropna()
+
+# Ensure columns match what the model expects (renaming if necessary)
+# If you downloaded the real dataset, you might need to uncomment the line below:
+# heartDisease.rename(columns={'sex': 'gender', 'target': 'Heartdisease'}, inplace=True)
+
+print('Few examples from the dataset are given below')
+print(heartDisease.head())
+
+# 3. Define the Model (DAG - Directed Acyclic Graph)
+# This structure defines the dependencies (e.g., Age influences Heart Disease)
+model = DiscreteBayesianNetwork([
+    ('age', 'Heartdisease'),
+    ('gender', 'Heartdisease'),
+    ('exang', 'Heartdisease'),
+    ('cp', 'Heartdisease'),
+    ('Heartdisease', 'restecg'),
+    ('Heartdisease', 'chol')
+])
+
+# 4. Train the Model
+print('\nLearning CPD using Maximum Likelihood Estimators...')
+model.fit(heartDisease, estimator=MaximumLikelihoodEstimator)
+
+# 5. Inference
+print('\nInferencing with Bayesian Network:')
+HeartDiseasetest_infer = VariableElimination(model)
+
+print('\n1. Probability of HeartDisease given evidence: age=35')
+q1 = HeartDiseasetest_infer.query(
+    variables=['Heartdisease'],
+    evidence={'age': 35}
+)
+print(q1)
+
+print('\n2. Probability of HeartDisease given evidence: chol=250')
+q2 = HeartDiseasetest_infer.query(
+    variables=['Heartdisease'],
+    evidence={'chol': 259}
+)
+print(q2)
+
+
+
+Program 7:
+
+
+from sklearn.cluster import KMeans
+import numpy as np
+import matplotlib.pyplot as plt
+
+x1 = np.array([3, 1, 1, 2, 1, 6, 6, 6, 5, 6, 7, 8, 9, 8, 9, 9, 8])
+x2 = np.array([5, 4, 6, 6, 5, 8, 6, 7, 6, 7, 1, 2, 1, 2, 3, 2, 3])
+
+plt.plot()
+plt.xlim([0, 10])
+plt.ylim([0, 10])
+plt.title('Dataset')
+plt.scatter(x1, x2)
+plt.show() #first output
+
+# create new plot and data
+X = np.array(list(zip(x1, x2))).reshape(len(x1), 2)
+colors = ['b', 'g', 'r']
+markers = ['o', 'v', 's']
+
+# KMeans algorithm
+K = 3
+kmeans_model = KMeans(K).fit(X)
+for i, l in enumerate(kmeans_model.labels_):
+    plt.plot(x1[i], x2[i], color=colors[l], marker=markers[l],ls='None')
+
+plt.xlim([0, 10])
+plt.ylim([0, 10])
+plt.show()
+
+
+Program 8:
+
+from sklearn.cluster import KMeans
+from sklearn.mixture import GaussianMixture
+from sklearn import metrics
+import pandas as pd
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+matplotlib.use('QtAgg')
+
+# --------------------------------------------
+# 1. LOAD DATA
+# --------------------------------------------
+data = pd.read_csv("AIML/datasets/p8.csv")
+
+# FIXED: Use .iloc for DataFrame slicing
+# We keep X as a DataFrame so we can access columns by name (X.Petal_Length)
+X = data.iloc[:, :-1]
+
+# Convert iris labels to numbers manually to match color map
+label_map = {
+    'setosa': 0,
+    'versicolor': 1,
+    'virginica': 2
+}
+# Note: If your CSV uses "Iris-setosa", change keys above accordingly.
+# The generator above uses "setosa", "versicolor", "virginica".
+y_true = np.array([label_map[label] for label in data.iloc[:, -1]])
+
+# Colors: 0=Red, 1=Lime, 2=Black
+colors = np.array(['red', 'lime', 'black'])
+
+plt.figure(figsize=(15, 5))
+
+# --------------------------------------------
+# 2. REAL LABELS PLOT
+# --------------------------------------------
+plt.subplot(1, 3, 1)
+plt.title("Actual Labels")
+plt.scatter(X.Petal_Length, X.Petal_Width, c=colors[y_true])
+
+# --------------------------------------------
+# 3. K-MEANS CLUSTERING
+# --------------------------------------------
+# random_state=42 acts as your "seed" for reproducible results
+kmeans = KMeans(n_clusters=3, random_state=42)
+kmeans_labels = kmeans.fit_predict(X)
+
+plt.subplot(1, 3, 2)
+plt.title("K-Means Clustering")
+plt.scatter(X.Petal_Length, X.Petal_Width, c=colors[kmeans_labels])
+
+print("K-Means Accuracy:", metrics.accuracy_score(y_true, kmeans_labels))
+print("K-Means Confusion Matrix:\n", metrics.confusion_matrix(y_true, kmeans_labels))
+
+# --------------------------------------------
+# 4. GMM (EM) CLUSTERING
+# --------------------------------------------
+gmm = GaussianMixture(n_components=3, random_state=42)
+gmm_labels = gmm.fit_predict(X)
+
+plt.subplot(1, 3, 3)
+plt.title("GMM (EM) Clustering")
+plt.scatter(X.Petal_Length, X.Petal_Width, c=colors[gmm_labels])
+
+print("GMM Accuracy:", metrics.accuracy_score(y_true, gmm_labels))
+print("GMM Confusion Matrix:\n", metrics.confusion_matrix(y_true, gmm_labels))
+
+plt.tight_layout()
+plt.show()
+
+
+Program 9:
+
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import scipy.cluster.hierarchy as sch
+from sklearn.cluster import AgglomerativeClustering
+
+dataset = pd.read_csv('AIML/datasets/p9.csv')
+X = dataset.iloc[:, [3, 4]].values
+
+dendrogram = sch.dendrogram(sch.linkage(X, method='ward'))
+plt.title('Dendrogram')
+plt.xlabel('Customers')
+plt.ylabel('Euclidean distances')
+plt.show()
+
+hc = AgglomerativeClustering(n_clusters=5, metric='euclidean', linkage='ward')
+y_hc = hc.fit_predict(X)
+plt.scatter(
+	X[y_hc == 0, 0],
+	X[y_hc == 0, 1],
+	s=100,
+	c='red',
+	label='Cluster 1'
+)
+plt.scatter(
+	X[y_hc == 1, 0],
+	X[y_hc == 1, 1],
+	s=100,
+	c='blue',
+	label='Cluster 2'
+)
+plt.scatter(
+	X[y_hc == 2, 0],
+	X[y_hc == 2, 1],
+	s=100,
+	c='green',
+	label='Cluster 3'
+)
+plt.scatter(
+	X[y_hc == 3, 0],
+	X[y_hc == 3, 1],
+	s=100,
+	c='cyan',
+	label='Cluster 4'
+)
+plt.scatter(
+	X[y_hc == 4, 0],
+	X[y_hc == 4, 1],
+	s=100,
+	c='magenta',
+	label='Cluster 5'
+)
+plt.title('Clusters of customers')
+plt.xlabel('Annual Income (k$)')
+plt.ylabel('Spending Score (1-100)')
+plt.legend()
+plt.show()
+
+
+
+Program 10:
+
+
+import numpy as np
+
+# 1. Setup Data
+# ------------------------------------------
+np.random.seed(42) # Ensures consistent results
+
+# Input data (Hours studied, Hours slept)
+X = np.array(([2, 9], [1, 5], [3, 6]), dtype=float)
+X = X / np.amax(X, axis=0) # Normalize input to 0-1 range
+
+# Target data (Test Score)
+y = np.array(([92], [86], [89]), dtype=float)
+y = y / 100.0  # CRITICAL FIX: Normalize output to 0-1 so Sigmoid can predict it
+
+# 2. Define Helper Functions
+# ------------------------------------------
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+def sigmoid_derivative(x):
+    return x * (1 - x)
+
+# 3. Initialize Weights and Biases
+# ------------------------------------------
+input_neurons = 2
+hidden_neurons = 3
+output_neurons = 1
+
+# Random weights and biases
+weights_input_hidden  = np.random.uniform(size=(input_neurons, hidden_neurons))
+bias_hidden           = np.random.uniform(size=(1, hidden_neurons))
+
+weights_hidden_output = np.random.uniform(size=(hidden_neurons, output_neurons))
+bias_output           = np.random.uniform(size=(1, output_neurons))
+
+learning_rate = 0.1
+epochs = 7000
+
+# 4. Training Loop
+# ------------------------------------------
+for i in range(epochs):
+    
+    # --- Forward Propagation (Guessing) ---
+    # Input -> Hidden Layer
+    hidden_input = np.dot(X, weights_input_hidden) + bias_hidden
+    hidden_output = sigmoid(hidden_input)
+    
+    # Hidden -> Output Layer
+    final_input = np.dot(hidden_output, weights_hidden_output) + bias_output
+    predicted_output = sigmoid(final_input)
+    
+    # --- Backward Propagation (Learning) ---
+    # Calculate Error
+    error = y - predicted_output
+    
+    # Calculate changes for Output Layer
+    d_output = error * sigmoid_derivative(predicted_output)
+    
+    # Calculate changes for Hidden Layer
+    error_hidden_layer = d_output.dot(weights_hidden_output.T)
+    d_hidden = error_hidden_layer * sigmoid_derivative(hidden_output)
+    
+    # Update Weights and Biases
+    weights_hidden_output += hidden_output.T.dot(d_output) * learning_rate
+    bias_output           += np.sum(d_output, axis=0, keepdims=True) * learning_rate
+    
+    weights_input_hidden  += X.T.dot(d_hidden) * learning_rate
+    bias_hidden           += np.sum(d_hidden, axis=0, keepdims=True) * learning_rate
+
+# 5. Final Result
+# ------------------------------------------
+print("Target Output:\n", y)
+print("Predicted Output:\n", predicted_output)
+
